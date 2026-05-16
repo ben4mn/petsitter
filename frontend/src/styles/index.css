@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #FAF7F2;
+  --color-surface: #F2EDE5;
+  --color-surface-2: #EBE3D5;
+  --color-ink: #2A2724;
+  --color-ink-2: #5A544E;
+  --color-ink-3: #8B847C;
+  --color-rule: #E5DED2;
+  --color-accent: #B86B4B;
+  --color-accent-hover: #A35C3F;
+  --color-accent-soft: #F4E3D7;
+  --color-sage: #8FA68E;
+  --color-sage-soft: #E4EAE0;
+  --color-warn: #C78E2E;
+  --color-danger: #B33A3A;
+
+  --font-display: "Fraunces", Georgia, ui-serif, serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-card: 14px;
+  --shadow-quiet: 0 1px 0 var(--color-rule);
+}
+
+html, body, #root {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-feature-settings: "cv11", "ss01";
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+  color: var(--color-ink);
+}
+
+input, textarea, select, button {
+  font: inherit;
+  color: inherit;
+}
+
+.no-tap {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.markdown p { margin-block: 0.5rem; }
+.markdown ul { list-style: disc; padding-inline-start: 1.25rem; margin-block: 0.5rem; }
+.markdown ol { list-style: decimal; padding-inline-start: 1.25rem; margin-block: 0.5rem; }
+.markdown strong { font-weight: 600; }
+.markdown em { font-style: italic; }
+.markdown code { font-family: var(--font-mono); font-size: 0.9em; background: var(--color-surface); padding: 0.1em 0.35em; border-radius: 4px; }
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fadein { animation: fadein 200ms ease-out; }

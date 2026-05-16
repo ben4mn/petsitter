@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Petsitter — a calm, custom PWA for whoever is watching your animals</title>
+    <meta name="description" content="A self-hostable progressive web app you set up for the friend, neighbor, or pro who's taking care of your pets while you're away." />
+    <meta property="og:title" content="Petsitter" />
+    <meta property="og:description" content="A calm, custom PWA for whoever is watching your animals." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./assets/og.svg" />
+    <meta name="theme-color" content="#FAF7F2" />
+    <link rel="icon" type="image/svg+xml" href="./assets/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="wrap topbar-inner">
+        <a href="#" class="brand">
+          <span class="brand-name">Petsitter</span>
+          <span class="brand-tag">house notes</span>
+        </a>
+        <nav class="topnav">
+          <a href="#features">Features</a>
+          <a href="#deploy">Deploy</a>
+          <a href="https://github.com/ben4mn/petsitter" class="ghost">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="wrap hero-inner">
+        <div class="hero-copy">
+          <p class="kicker">Open source · self-hosted · MIT</p>
+          <h1>The printed instructions sheet, upgraded thoughtfully.</h1>
+          <p class="lede">
+            Petsitter is a calm, installable web app you set up once and hand to whoever is watching your animals — a friend, a neighbor, a pro. Today's checklist, every pet's quirks, the WiFi password, the emergency number, and a small house assistant they can ask anything. No accounts to set up but the one you invite.
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#deploy">Deploy your own</a>
+            <a class="btn btn-ghost" href="https://github.com/ben4mn/petsitter">Star on GitHub →</a>
+          </div>
+          <div class="badges">
+            <span class="badge">React 19</span>
+            <span class="badge">PWA · web push</span>
+            <span class="badge">Cloudflare Tunnel</span>
+            <span class="badge">Claude Haiku chat</span>
+          </div>
+        </div>
+        <aside class="hero-mock" aria-hidden="true">
+          <div class="mock-phone">
+            <div class="mock-screen">
+              <div class="mock-kicker">Today</div>
+              <h3 class="mock-title">Tuesday, May 21</h3>
+              <div class="mock-section">Morning <span class="mock-count">3 of 5</span></div>
+              <ul class="mock-list">
+                <li class="done"><span class="check filled"></span>Feed Mango &amp; Pepper</li>
+                <li class="done"><span class="check filled"></span>Walk Otis (20 min)</li>
+                <li class="done"><span class="check filled"></span>Quick walk for Juniper</li>
+                <li><span class="check"></span>Feed both dogs</li>
+                <li><span class="check"></span>Refill water bowls</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="wrap">
+        <h2 class="section-title">What it does</h2>
+        <div class="feature-grid">
+          <article class="feature">
+            <h3>Today</h3>
+            <p>Morning and evening checklists with a quiet progress bar. Tap to check off. Optimistic, syncs in the background.</p>
+          </article>
+          <article class="feature">
+            <h3>Summary</h3>
+            <p>One scrollable view: every pet's photo, quirks, care notes. WiFi, trash day, the 24-hour vet, the neighbor with the spare key.</p>
+          </article>
+          <article class="feature">
+            <h3>Reminders</h3>
+            <p>Real web-push notifications — fire even when the app is closed. Once, daily, or weekly. Powered by your own VAPID keys.</p>
+          </article>
+          <article class="feature">
+            <h3>House chat</h3>
+            <p>A small Claude Haiku assistant that knows the trip notes. "What do the cats eat at night?" — answered, not guessed.</p>
+          </article>
+          <article class="feature">
+            <h3>Allowlist invites</h3>
+            <p>Sign-up is gated by an email you add. No anonymous accounts. Pre-assign your sitter to their trip so they land in the right place.</p>
+          </article>
+          <article class="feature">
+            <h3>Owner admin</h3>
+            <p>One screen to edit the trip — pets, photos, care notes, tasks, house notes, allowlist. Markdown supported. No SQL required.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="deploy" class="section section-alt">
+      <div class="wrap">
+        <h2 class="section-title">Deploy your own</h2>
+        <p class="section-lede">Five steps. ~15 minutes. Self-hosted on any Docker host with a Cloudflare-fronted domain.</p>
+        <ol class="steps">
+          <li>
+            <h3>1 · Clone &amp; configure</h3>
+            <pre><code>git clone https://github.com/ben4mn/petsitter
+cd petsitter
+cp .env.example .env</code></pre>
+            <p>Fill in <code>JWT_SECRET</code> (<code>openssl rand -base64 48</code>), <code>ANTHROPIC_API_KEY</code>, and a VAPID keypair (<code>npx web-push generate-vapid-keys</code>).</p>
+          </li>
+          <li>
+            <h3>2 · Seed the first trip</h3>
+            <pre><code>cp seed.config.example.json seed.config.json
+# edit it: owner email/password, pets, tasks, house notes
+docker compose up -d db
+cd backend &amp;&amp; npm install &amp;&amp; npm run seed</code></pre>
+          </li>
+          <li>
+            <h3>3 · Bring up the stack</h3>
+            <pre><code>docker compose up -d --build</code></pre>
+            <p>The web container listens on port <code>8084</code> and proxies <code>/api</code> internally to the backend.</p>
+          </li>
+          <li>
+            <h3>4 · Point a subdomain at it via Cloudflare Tunnel</h3>
+            <pre><code>cloudflared tunnel login
+cloudflared tunnel create petsitter
+cloudflared tunnel route dns petsitter sitter.your-domain.com
+sudo cp cloudflared/config.example.yml /etc/cloudflared/config.yml
+# edit: tunnel UUID, hostname → http://localhost:8084
+sudo cloudflared service install
+sudo systemctl enable --now cloudflared</code></pre>
+          </li>
+          <li>
+            <h3>5 · Invite your sitter</h3>
+            <p>Sign in as owner → <strong>Admin → Allowlist</strong> → add their email, pre-assign the trip. They register, get pushed straight into the right view.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap">
+        <h2 class="section-title">Why we built it</h2>
+        <p class="prose">
+          The night before someone watches your animals, you end up writing the same sheet of paper you wrote last time. Where the wet food is, why the small dog hides at first, which neighbor has the spare key, when trash day is.
+        </p>
+        <p class="prose">
+          Petsitter is that sheet, but on a phone, with reminders, and an assistant who can answer the dumb questions at 11pm. It isn't trying to be a marketplace or a startup. It's a small, calm tool — yours to host, yours to hand over.
+        </p>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <span>MIT · made for sitters, designed for hosts</span>
+        <a href="https://github.com/ben4mn/petsitter">GitHub</a>
+      </div>
+    </footer>
+  </body>
+</html>

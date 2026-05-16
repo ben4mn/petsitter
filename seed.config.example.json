@@ -1,0 +1,110 @@
+{
+  "owner": {
+    "email": "owner@example.com",
+    "password": "change-me-now",
+    "name": "Owner Name"
+  },
+  "sitter_allowlist": [
+    { "email": "hanna@example.com" }
+  ],
+  "trip": {
+    "name": "May 2026 sit",
+    "host_household_name": "The 4mn House",
+    "start_date": "2026-05-20",
+    "end_date": "2026-05-27",
+    "address": "123 Quiet Lane",
+    "wifi_ssid": "HouseWifi",
+    "wifi_password": "purr-bark-purr-bark",
+    "notes_markdown": "Thermostat lives by the kitchen door — leave it at 70°F."
+  },
+  "pets": [
+    {
+      "name": "Mango",
+      "species": "cat",
+      "breed": "Tabby",
+      "age_years": 4,
+      "color": "orange",
+      "quirks_markdown": "Loves the windowsill at sunrise. Will pretend the food bowl is empty when it isn't.",
+      "care": [
+        { "time_of_day": "morning", "body_markdown": "1/3 cup dry food in the kitchen bowl. Fresh water." },
+        { "time_of_day": "night", "body_markdown": "1/2 can wet food, hallway dish. Hide if guests come over — that's normal." }
+      ]
+    },
+    {
+      "name": "Pepper",
+      "species": "cat",
+      "breed": "Domestic shorthair",
+      "age_years": 7,
+      "color": "black",
+      "quirks_markdown": "Senior cat — slower, deaf in one ear, very chatty.",
+      "care": [
+        { "time_of_day": "morning", "body_markdown": "1/3 cup senior dry food, same bowl as Mango but Mango usually steals it. Watch them." },
+        { "time_of_day": "night", "body_markdown": "1/2 can wet food. She gets the laundry-room dish — closes the door so Mango can't bother her." }
+      ]
+    },
+    {
+      "name": "Otis",
+      "species": "dog",
+      "breed": "Lab mix",
+      "age_years": 6,
+      "color": "chocolate",
+      "quirks_markdown": "Big, friendly, will lean on you. Knows sit, down, leave it.",
+      "care": [
+        { "time_of_day": "morning", "body_markdown": "1.5 cups kibble. 20-minute walk before breakfast — he's calmer after." },
+        { "time_of_day": "night", "body_markdown": "1.5 cups kibble. Last potty break by 10pm, otherwise he'll wake you at 5am." }
+      ]
+    },
+    {
+      "name": "Juniper",
+      "species": "dog",
+      "breed": "Mini poodle",
+      "age_years": 2,
+      "color": "apricot",
+      "quirks_markdown": "Tiny, anxious of strangers for the first day. Once she warms up, she's a velcro dog.",
+      "care": [
+        { "time_of_day": "morning", "body_markdown": "1/2 cup kibble. Short walk with Otis, but watch — she gets dragged if he sees a squirrel." },
+        { "time_of_day": "night", "body_markdown": "1/2 cup kibble. Sleeps on a blanket at the foot of the bed if she's chosen you." }
+      ]
+    }
+  ],
+  "house_notes": [
+    {
+      "category": "house",
+      "title": "Thermostat & lights",
+      "body_markdown": "Thermostat by the kitchen door, leave at 70°F. The front porch light is on a timer — don't touch the switch."
+    },
+    {
+      "category": "trash",
+      "title": "Trash day",
+      "body_markdown": "Bins go out Tuesday night. Recycling is the blue bin, every other Tuesday."
+    },
+    {
+      "category": "emergency",
+      "title": "Vet — open 24/7",
+      "body_markdown": "Banfield Pet Hospital. (555) 123-4567. 2 miles south on Main. Pets' records are under the household name."
+    },
+    {
+      "category": "emergency",
+      "title": "Neighbor with spare key",
+      "body_markdown": "Diane next door at the gray house. (555) 987-6543. She's home most days."
+    },
+    {
+      "category": "wifi",
+      "title": "WiFi",
+      "body_markdown": "Network: HouseWifi · Password: purr-bark-purr-bark · 5G band is faster, 2.4G reaches the back porch."
+    }
+  ],
+  "morning_tasks": [
+    { "title": "Feed Mango & Pepper", "description_markdown": "Watch that Mango doesn't eat Pepper's food." },
+    { "title": "Walk Otis (20 min)", "description_markdown": "Leashes by the front door. Poop bags in the bowl." },
+    { "title": "Quick walk for Juniper", "description_markdown": "Around the block — she's small and tires fast." },
+    { "title": "Feed both dogs" },
+    { "title": "Refill water bowls", "description_markdown": "Three bowls: kitchen, laundry, back porch." }
+  ],
+  "night_tasks": [
+    { "title": "Feed the cats (wet food)" },
+    { "title": "Last walk for the dogs", "description_markdown": "By 10pm or Otis wakes you at 5." },
+    { "title": "Feed both dogs (dinner)" },
+    { "title": "Lock back door & set porch light", "description_markdown": "Porch light is on a timer — don't toggle the switch." }
+  ]
+}

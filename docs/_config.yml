@@ -1,0 +1,5 @@
+# Disable Jekyll processing — we serve plain HTML/CSS from /docs.
+include:
+  - "_files-starting-with-underscore-are-allowed"
+plugins: []
+markdown: kramdown

@@ -1,0 +1,15 @@
+{
+  "name": "Petsitter",
+  "short_name": "Petsitter",
+  "description": "A calm, custom PWA for whoever is taking care of your pets.",
+  "theme_color": "#FAF7F2",
+  "background_color": "#FAF7F2",
+  "display": "standalone",
+  "start_url": "/today",
+  "scope": "/",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: petsitter
+      POSTGRES_PASSWORD: petsitter
+      POSTGRES_DB: petsitter
+    ports:
+      - "5433:5432"
+    volumes:
+      - petsitter_db_dev:/var/lib/postgresql/data
+
+volumes:
+  petsitter_db_dev:
