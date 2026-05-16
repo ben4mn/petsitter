@@ -81,8 +81,25 @@ export function Summary() {
         {(data.trip.start_date || data.trip.end_date) && (
           <p className="text-ink-2 mt-1 text-[15px]">
             {fmtDate(data.trip.start_date)} – {fmtDate(data.trip.end_date)}
+            {data.trip.host_household_name && (
+              <> · <span className="text-ink-3">at {data.trip.host_household_name}</span></>
+            )}
           </p>
         )}
+        {data.trip.address && (
+          <p className="text-ink-2 mt-1 text-[14px]">{data.trip.address}</p>
+        )}
+
+        {(data.trip.wifi_ssid || data.trip.wifi_password) && (
+          <div className="mt-4 inline-flex flex-wrap items-baseline gap-x-3 gap-y-1 px-3.5 py-2 bg-surface rounded-[10px] border border-rule text-sm">
+            <span className="text-[11px] uppercase tracking-widest text-ink-3">WiFi</span>
+            {data.trip.wifi_ssid && <span className="text-ink font-medium">{data.trip.wifi_ssid}</span>}
+            {data.trip.wifi_password && (
+              <span className="text-ink font-mono select-all">{data.trip.wifi_password}</span>
+            )}
+          </div>
+        )}
+
         {data.trip.notes_markdown && (
           <div className="mt-4">
             <Markdown>{data.trip.notes_markdown}</Markdown>
