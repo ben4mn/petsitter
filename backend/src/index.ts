@@ -18,6 +18,20 @@ const PORT = Number(process.env.PORT ?? 3032);
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 
+// Request logging — terse, one line per request, includes status + latency.
+// Critical for diagnosing save failures (the kind that previously left admin
+// edits silently lost). Skip the noisy health probe.
+app.use((req, res, next) => {
+  if (req.path === '/api/health') return next();
+  const start = Date.now();
+  res.on('finish', () => {
+    const dur = Date.now() - start;
+    const tag = res.statusCode >= 500 ? '[req!]' : res.statusCode >= 400 ? '[req?]' : '[req]';
+    console.log(`${tag} ${req.method} ${req.path} → ${res.statusCode} ${dur}ms`);
+  });
+  next();
+});
+
 if (process.env.NODE_ENV !== 'production') {
   app.use(
     cors({

@@ -1,8 +1,38 @@
-import { useEffect, useRef, useState } from 'react';
-import { api } from '../../lib/api';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { api, ApiError } from '../../lib/api';
 import { Button } from '../../components/ui/Button';
 import { Card, CardSection } from '../../components/ui/Card';
 import { Input, Label, Textarea } from '../../components/ui/Input';
+
+// Hook: install a beforeunload listener while `when` is true.
+// Catches accidental tab-closes / nav with unsaved changes.
+function useUnsavedGuard(when: boolean) {
+  useEffect(() => {
+    if (!when) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [when]);
+}
+
+function DirtyDot({ title = 'Unsaved changes' }: { title?: string }) {
+  return (
+    <span
+      className="inline-block h-2 w-2 rounded-full bg-warn"
+      title={title}
+      aria-label={title}
+    />
+  );
+}
+
+function errorMessage(e: unknown): string {
+  if (e instanceof ApiError) return e.message || 'Save failed.';
+  if (e instanceof Error) return e.message;
+  return 'Save failed.';
+}
 
 type Trip = {
   id: string;
@@ -33,6 +63,7 @@ type Task = { id: string; time_of_day: string; title: string; description_markdo
 
 export function AdminTrip() {
   const [trip, setTrip] = useState<Trip | null>(null);
+  const [serverTrip, setServerTrip] = useState<Trip | null>(null);
   const [pets, setPets] = useState<Pet[]>([]);
   const [care, setCare] = useState<Care[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -40,11 +71,15 @@ export function AdminTrip() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const load = async () => {
     try {
       const r = await api.get<{ trip: Trip; pets: Pet[]; care: Care[]; notes: Note[]; tasks: Task[] }>('/trip/current');
-      setTrip(r.trip);
+      // Only blow away local edits if we're loading for the first time —
+      // otherwise refresh sibling lists but keep the user's in-progress edits.
+      setTrip((cur) => (cur ? cur : r.trip));
+      setServerTrip(r.trip);
       setPets(r.pets);
       setCare(r.care);
       setNotes(r.notes);
@@ -58,9 +93,24 @@ export function AdminTrip() {
     load();
   }, []);
 
+  const tripDirty = useMemo(
+    () => trip != null && serverTrip != null && JSON.stringify(trip) !== JSON.stringify(serverTrip),
+    [trip, serverTrip],
+  );
+
+  useUnsavedGuard(tripDirty);
+
+  // Auto-clear the "Saved" indicator after a moment so it doesn't stick around.
+  useEffect(() => {
+    if (!savedAt) return;
+    const t = setTimeout(() => setSavedAt(null), 3000);
+    return () => clearTimeout(t);
+  }, [savedAt]);
+
   const saveTrip = async () => {
     if (!trip) return;
     setSaving(true);
+    setSaveError(null);
     try {
       await api.patch(`/admin/trips/${trip.id}`, {
         name: trip.name,
@@ -72,7 +122,10 @@ export function AdminTrip() {
         wifi_password: trip.wifi_password,
         notes_markdown: trip.notes_markdown,
       });
+      setServerTrip(trip);
       setSavedAt(new Date());
+    } catch (e) {
+      setSaveError(errorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -85,7 +138,10 @@ export function AdminTrip() {
     <div className="space-y-8">
       <Card>
         <CardSection>
-          <h2 className="font-display text-[20px] font-semibold text-ink mb-4">Trip details</h2>
+          <h2 className="font-display text-[20px] font-semibold text-ink mb-4 flex items-center gap-2">
+            Trip details
+            {tripDirty && <DirtyDot />}
+          </h2>
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <Label>Name</Label>
@@ -127,11 +183,12 @@ export function AdminTrip() {
               />
             </div>
           </div>
-          <div className="mt-4 flex items-center gap-3">
-            <Button onClick={saveTrip} disabled={saving}>
-              {saving ? 'Saving…' : 'Save trip'}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button onClick={saveTrip} disabled={saving || !tripDirty}>
+              {saving ? 'Saving…' : tripDirty ? 'Save trip' : 'Saved'}
             </Button>
-            {savedAt && <span className="text-sm text-ink-3">Saved {savedAt.toLocaleTimeString()}.</span>}
+            {savedAt && !tripDirty && <span className="text-sm text-sage">Saved.</span>}
+            {saveError && <span className="text-sm text-danger">⚠ {saveError}</span>}
           </div>
         </CardSection>
       </Card>
@@ -146,10 +203,12 @@ export function AdminTrip() {
 function PetsSection({ trip, pets, care, onReload }: { trip: Trip; pets: Pet[]; care: Care[]; onReload: () => void }) {
   const [draft, setDraft] = useState({ name: '', species: 'cat' as Pet['species'], breed: '', age_years: '' });
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   const add = async () => {
     if (!draft.name) return;
     setBusy(true);
+    setErr(null);
     try {
       await api.post('/admin/pets', {
         trip_id: trip.id,
@@ -160,6 +219,8 @@ function PetsSection({ trip, pets, care, onReload }: { trip: Trip; pets: Pet[]; 
       });
       setDraft({ name: '', species: 'cat', breed: '', age_years: '' });
       onReload();
+    } catch (e) {
+      setErr(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -196,6 +257,7 @@ function PetsSection({ trip, pets, care, onReload }: { trip: Trip; pets: Pet[]; 
           <Button size="sm" variant="secondary" onClick={add} disabled={busy || !draft.name}>
             {busy ? 'Adding…' : 'Add pet'}
           </Button>
+          {err && <p className="text-sm text-danger">⚠ {err}</p>}
         </div>
       </CardSection>
     </Card>
@@ -208,10 +270,17 @@ function PetEditor({ pet, care, onReload }: { pet: Pet; care: Care[]; onReload: 
   const [careDraft, setCareDraft] = useState({ time_of_day: 'morning' as Care['time_of_day'], body_markdown: '' });
   const [savingPet, setSavingPet] = useState(false);
   const [savedPetAt, setSavedPetAt] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [careError, setCareError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const rowRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Dirty = local edits not yet PATCHed to the server.
+  const dirty = useMemo(() => JSON.stringify(local) !== JSON.stringify(pet), [local, pet]);
+  useUnsavedGuard(dirty);
 
   // When the card expands, bring its header into view so the form isn't
   // hidden under the iOS keyboard when the first input gets focus.
@@ -223,17 +292,36 @@ function PetEditor({ pet, care, onReload }: { pet: Pet; care: Care[]; onReload: 
     }
   }, [open]);
 
-  // Re-sync local state if the parent reloaded with a different pet shape.
+  // Re-sync local state only when the pet identity changes, or when local has
+  // no pending edits. Refreshing the parent (e.g. after adding a care note)
+  // used to wipe in-progress edits to name/quirks/etc. — that's the exact
+  // failure mode that lost GF's work last time.
   useEffect(() => {
-    setLocal(pet);
-  }, [pet.id, pet.photo_url]);
+    setLocal((current) => {
+      if (current.id !== pet.id) return pet;
+      if (JSON.stringify(current) === JSON.stringify(pet)) return current;
+      // local has unsaved edits — keep them, but pick up server-only fields
+      // (like a fresh photo_url from an upload that completed elsewhere).
+      return { ...pet, ...current };
+    });
+  }, [pet]);
+
+  // Auto-fade the "Saved" indicator.
+  useEffect(() => {
+    if (!savedPetAt) return;
+    const t = setTimeout(() => setSavedPetAt(null), 3000);
+    return () => clearTimeout(t);
+  }, [savedPetAt]);
 
   const save = async () => {
     setSavingPet(true);
+    setSaveError(null);
     try {
       await api.patch(`/admin/pets/${pet.id}`, local);
       setSavedPetAt(new Date());
       onReload();
+    } catch (e) {
+      setSaveError(errorMessage(e));
     } finally {
       setSavingPet(false);
     }
@@ -241,22 +329,31 @@ function PetEditor({ pet, care, onReload }: { pet: Pet; care: Care[]; onReload: 
 
   const upload = async (file: File) => {
     setUploading(true);
+    setUploadError(null);
     try {
       const r = await api.upload<{ url: string }>(`/admin/upload`, file);
       setLocal((p) => ({ ...p, photo_url: r.url }));
+    } catch (e) {
+      setUploadError(errorMessage(e));
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div ref={rowRef} className="border border-rule rounded-[10px] scroll-mt-20">
+    <div
+      ref={rowRef}
+      className={`border rounded-[10px] scroll-mt-20 transition-colors ${
+        dirty ? 'border-warn' : 'border-rule'
+      }`}
+    >
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-3.5 no-tap hover:bg-surface min-h-[52px]"
       >
-        <span className="font-medium text-ink">
+        <span className="font-medium text-ink flex items-center gap-2">
           {pet.name} <span className="text-ink-3 font-normal">· {pet.species}</span>
+          {dirty && <DirtyDot />}
         </span>
         <span className="text-ink-3 text-sm" aria-hidden>{open ? '⌃' : '⌄'}</span>
       </button>
@@ -322,16 +419,23 @@ function PetEditor({ pet, care, onReload }: { pet: Pet; care: Care[]; onReload: 
                   {uploading ? 'Uploading…' : local.photo_url ? 'Replace photo' : 'Add photo'}
                 </Button>
               </div>
+              {uploadError && <p className="text-sm text-danger mt-2">⚠ {uploadError}</p>}
+              {local.photo_url && dirty && (
+                <p className="text-xs text-warn mt-2">
+                  Photo uploaded — remember to <strong>Save pet</strong> to attach it.
+                </p>
+              )}
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Button onClick={save} disabled={savingPet}>
-              {savingPet ? 'Saving…' : 'Save pet'}
+            <Button onClick={save} disabled={savingPet || !dirty}>
+              {savingPet ? 'Saving…' : dirty ? 'Save pet' : 'Saved'}
             </Button>
-            {savedPetAt && !savingPet && (
+            {savedPetAt && !savingPet && !dirty && (
               <span className="text-sm text-sage">Saved.</span>
             )}
+            {saveError && <span className="text-sm text-danger">⚠ {saveError}</span>}
             <div className="flex-1" />
             <Button
               size="sm"
@@ -406,15 +510,21 @@ function PetEditor({ pet, care, onReload }: { pet: Pet; care: Care[]; onReload: 
               <Button
                 onClick={async () => {
                   if (!careDraft.body_markdown) return;
-                  await api.post('/admin/care', { pet_id: pet.id, ...careDraft });
-                  setCareDraft({ time_of_day: 'morning', body_markdown: '' });
-                  onReload();
+                  setCareError(null);
+                  try {
+                    await api.post('/admin/care', { pet_id: pet.id, ...careDraft });
+                    setCareDraft({ time_of_day: 'morning', body_markdown: '' });
+                    onReload();
+                  } catch (e) {
+                    setCareError(errorMessage(e));
+                  }
                 }}
                 disabled={!careDraft.body_markdown}
               >
                 Add note
               </Button>
             </div>
+            {careError && <p className="text-sm text-danger mt-2">⚠ {careError}</p>}
           </div>
         </div>
       )}
@@ -424,12 +534,18 @@ function PetEditor({ pet, care, onReload }: { pet: Pet; care: Care[]; onReload: 
 
 function TasksSection({ trip, tasks, onReload }: { trip: Trip; tasks: Task[]; onReload: () => void }) {
   const [draft, setDraft] = useState({ time_of_day: 'morning' as 'morning' | 'night', title: '', description_markdown: '' });
+  const [err, setErr] = useState<string | null>(null);
 
   const add = async () => {
     if (!draft.title) return;
-    await api.post('/admin/tasks', { trip_id: trip.id, ...draft, description_markdown: draft.description_markdown || undefined });
-    setDraft({ time_of_day: draft.time_of_day, title: '', description_markdown: '' });
-    onReload();
+    setErr(null);
+    try {
+      await api.post('/admin/tasks', { trip_id: trip.id, ...draft, description_markdown: draft.description_markdown || undefined });
+      setDraft({ time_of_day: draft.time_of_day, title: '', description_markdown: '' });
+      onReload();
+    } catch (e) {
+      setErr(errorMessage(e));
+    }
   };
 
   return (
@@ -494,6 +610,7 @@ function TasksSection({ trip, tasks, onReload }: { trip: Trip; tasks: Task[]; on
             />
           </div>
           <Button onClick={add} disabled={!draft.title}>Add task</Button>
+          {err && <p className="text-sm text-danger w-full">⚠ {err}</p>}
         </div>
       </CardSection>
     </Card>
@@ -502,12 +619,18 @@ function TasksSection({ trip, tasks, onReload }: { trip: Trip; tasks: Task[]; on
 
 function NotesSection({ trip, notes, onReload }: { trip: Trip; notes: Note[]; onReload: () => void }) {
   const [draft, setDraft] = useState({ category: 'house' as Note['category'] | string, title: '', body_markdown: '' });
+  const [err, setErr] = useState<string | null>(null);
 
   const add = async () => {
     if (!draft.title || !draft.body_markdown) return;
-    await api.post('/admin/notes', { trip_id: trip.id, ...draft });
-    setDraft({ category: 'house', title: '', body_markdown: '' });
-    onReload();
+    setErr(null);
+    try {
+      await api.post('/admin/notes', { trip_id: trip.id, ...draft });
+      setDraft({ category: 'house', title: '', body_markdown: '' });
+      onReload();
+    } catch (e) {
+      setErr(errorMessage(e));
+    }
   };
 
   return (
@@ -575,6 +698,7 @@ function NotesSection({ trip, notes, onReload }: { trip: Trip; notes: Note[]; on
             />
           </div>
           <Button onClick={add} disabled={!draft.title || !draft.body_markdown}>Add note</Button>
+          {err && <p className="text-sm text-danger">⚠ {err}</p>}
         </div>
       </CardSection>
     </Card>
