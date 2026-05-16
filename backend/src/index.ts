@@ -42,7 +42,17 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR ?? (process.env.NODE_ENV === 'production' ? '/app/uploads' : './uploads');
-app.use('/uploads', express.static(UPLOADS_DIR, { fallthrough: true }));
+// Short cache + must-revalidate for user-uploaded photos — they're rare so the
+// hit-rate is low, and a CDN caching a transient 404 (as happened in early
+// nginx routing bugs) would otherwise stay broken for hours.
+app.use(
+  '/uploads',
+  (_req, res, next) => {
+    res.setHeader('Cache-Control', 'public, max-age=60, must-revalidate');
+    next();
+  },
+  express.static(UPLOADS_DIR, { fallthrough: true }),
+);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 
